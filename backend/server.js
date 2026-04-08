@@ -24,10 +24,7 @@ app.use(cors({
 
 app.use(express.json())
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB error:', err));
-
+// Setup routes
 app.use('/api/flights', flightsRoutes);
 app.use('/api', authRoutes);
 
@@ -52,7 +49,15 @@ app.get('/api/home', verifyToken, async (req, res) => {
     }
 })
 
-const start = () => {
-    console.log(`Server running on port ${PORT}`)
-}
-app.listen(PORT , start )
+// Connect to MongoDB and start server
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('MongoDB connected')
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`)
+    })
+  })
+  .catch(err => {
+    console.error('MongoDB connection error:', err)
+    process.exit(1)
+  })
