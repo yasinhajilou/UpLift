@@ -21,12 +21,20 @@ function Cart() {
     } catch (err) {
       console.error("Logout error:", err)
     }
+    // Clear user-specific cart
+    const userEmail = localStorage.getItem("userEmail")
+    if (userEmail) {
+      localStorage.removeItem(`cart_${userEmail}`)
+    }
     localStorage.removeItem("token")
+    localStorage.removeItem("userEmail")
     navigate("/")
   }
 
   useEffect(() => {
-    const storedCart = JSON.parse(localStorage.getItem("cart")) || []
+    const userEmail = localStorage.getItem("userEmail")
+    const cartKey = `cart_${userEmail}`
+    const storedCart = JSON.parse(localStorage.getItem(cartKey)) || []
     setCartItems(storedCart)
   }, [])
 
@@ -36,7 +44,9 @@ function Cart() {
 
     setCartItems(updatedCart)
 
-    localStorage.setItem("cart", JSON.stringify(updatedCart))
+    const userEmail = localStorage.getItem("userEmail")
+    const cartKey = `cart_${userEmail}`
+    localStorage.setItem(cartKey, JSON.stringify(updatedCart))
   }
 
   const getTotal = () => {

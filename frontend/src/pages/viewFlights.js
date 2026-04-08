@@ -24,7 +24,13 @@ function ViewFlights() {
     } catch (err) {
       console.error("Logout error:", err)
     }
+    // Clear user-specific cart
+    const userEmail = localStorage.getItem("userEmail")
+    if (userEmail) {
+      localStorage.removeItem(`cart_${userEmail}`)
+    }
     localStorage.removeItem("token")
+    localStorage.removeItem("userEmail")
     navigate("/")
   }
 
@@ -79,9 +85,11 @@ function ViewFlights() {
   }
 
   const addToCart = (flight) => {
-    let cart = JSON.parse(localStorage.getItem("cart")) || []
+    const userEmail = localStorage.getItem("userEmail")
+    const cartKey = `cart_${userEmail}`
+    let cart = JSON.parse(localStorage.getItem(cartKey)) || []
     cart.push({ ...flight, passengers: 1 })
-    localStorage.setItem("cart", JSON.stringify(cart))
+    localStorage.setItem(cartKey, JSON.stringify(cart))
     alert("Flight added to cart!")
   }
 

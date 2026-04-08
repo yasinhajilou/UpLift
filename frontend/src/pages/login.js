@@ -27,9 +27,10 @@ function Login() {
 
     console.log("Login success:", response.data)
     
-    // Store JWT token
+    // Store JWT token and user email
     if (response.data.token) {
       localStorage.setItem("token", response.data.token)
+      localStorage.setItem("userEmail", response.data.user.email)
     }
     
     navigate("/home")
