@@ -1,78 +1,142 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import axios from "axios"
 import "../App.css"
+
+const API_URL = process.env.REACT_APP_API_URL
 
 function ViewFlights() {
 
   const [flights, setFlights] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [filters, setFilters] = useState({ from: "", to: "", date: "" })
   const navigate = useNavigate()
 
   useEffect(() => {
-    setFlights([
-      {
-        flightId: "f1",
-        airline: "Air Canada",
-        from: "YYZ",
-        to: "LAX",
-        departureTime: "08:00",
-        arrivalTime: "11:30",
-        duration: "5h 30m",
-        price: 299
-      },
-      {
-        flightId: "f2",
-        airline: "WestJet",
-        from: "YYZ",
-        to: "NYC",
-        departureTime: "10:00",
-        arrivalTime: "12:00",
-        duration: "2h",
-        price: 199
-      }
-    ])
+    fetchFlights()
   }, [])
 
+  const fetchFlights = async (queryParams = {}) => {
+    try {
+      setLoading(true)
+      setError("")
+
+      const params = new URLSearchParams()
+      if (queryParams.from || filters.from) params.append("from", queryParams.from || filters.from)
+      if (queryParams.to || filters.to) params.append("to", queryParams.to || filters.to)
+      if (queryParams.date || filters.date) params.append("date", queryParams.date || filters.date)
+
+      const response = await axios.get(
+        `${API_URL}/api/flights${params.toString() ? "?" + params.toString() : ""}`,
+        { withCredentials: true }
+      )
+
+      setFlights(response.data.flights || [])
+    } catch (err) {
+      console.error("Error fetching flights:", err)
+      setError("Failed to load flights. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleFilterChange = (e) => {
+    setFilters({
+      ...filters,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleFilterSubmit = (e) => {
+    e.preventDefault()
+    fetchFlights(filters)
+  }
+
   const addToCart = (flight) => {
-
     let cart = JSON.parse(localStorage.getItem("cart")) || []
-
     cart.push({ ...flight, passengers: 1 })
-
     localStorage.setItem("cart", JSON.stringify(cart))
-
     alert("Flight added to cart!")
   }
 
-  return (
-
-    <div className="page">
-
-      <h1>Available Flights</h1>
-
-      {flights.map(flight => (
-
-        <div key={flight.flightId} className="flight-card">
-
-          <h3>{flight.airline}</h3>
-          <p>{flight.from} → {flight.to}</p>
-          <p>{flight.departureTime} - {flight.arrivalTime}</p>
-          <p>{flight.duration}</p>
-          <p>${flight.price}</p>
-
-          <button onClick={() => addToCart(flight)}>
-            Add to Cart
-          </button>
-
+  if (loading) {
+    return (
+      <div className="page">
+        <div className="header">
+          <div className="logo">Uplift</div>
         </div>
+        <div className="flights-container">
+          <h2>Loading flights...</h2>
+        </div>
+      </div>
+    )
+  }
 
-      ))}
+  return (
+    <div className="page">
+      <div className="header">
+        <div className="logo">Uplift</div>
+      </div>
 
-      <button onClick={() => navigate("/cart")}>
-        Go to Cart
-      </button>
+      <div className="flights-container">
+        <h1 className="flights-title">Available Flights</h1>
 
+        <form onSubmit={handleFilterSubmit} className="filter-form">
+          <input
+            type="text"
+            name="from"
+            placeholder="From (e.g., YYZ)"
+            value={filters.from}
+            onChange={handleFilterChange}
+          />
+          <input
+            type="text"
+            name="to"
+            placeholder="To (e.g., LAX)"
+            value={filters.to}
+            onChange={handleFilterChange}
+          />
+          <input
+            type="date"
+            name="date"
+            value={filters.date}
+            onChange={handleFilterChange}
+          />
+          <button type="submit">Search</button>
+        </form>
+
+        {error && <p className="error-text">{error}</p>}
+
+        {flights.length === 0 ? (
+          <p className="no-flights-message">No flights found. Try different filters.</p>
+        ) : (
+          <div className="flights-list">
+            {flights.map(flight => (
+              <div key={flight.flightId} className="flight-card">
+                <h3>{flight.airline}</h3>
+                <p><strong>{flight.from} → {flight.to}</strong></p>
+                <p>{flight.departureDate} {flight.departureTime} - {flight.arrivalTime}</p>
+                <p>Duration: {flight.duration}</p>
+                <p style={{ fontSize: "18px", fontWeight: "bold", color: "#2c3e50" }}>${flight.price}</p>
+                <button onClick={() => addToCart(flight)}>
+                  Add to Cart
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flights-footer">
+          <button onClick={() => navigate("/home")}>
+            Back to Home
+          </button>
+          <button onClick={() => navigate("/cart")}>
+            View My Cart
+          </button>
+        </div>
+      </div>
     </div>
-
   )
 }
 
