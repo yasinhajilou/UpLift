@@ -13,6 +13,21 @@ function ViewFlights() {
   const [filters, setFilters] = useState({ from: "", to: "", date: "" })
   const navigate = useNavigate()
 
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      if (token) {
+        await axios.post(`${API_URL}/api/logout`, {}, {
+          headers: { "Authorization": `Bearer ${token}` }
+        })
+      }
+    } catch (err) {
+      console.error("Logout error:", err)
+    }
+    localStorage.removeItem("token")
+    navigate("/")
+  }
+
   useEffect(() => {
     fetchFlights()
   }, [])
@@ -22,6 +37,12 @@ function ViewFlights() {
       setLoading(true)
       setError("")
 
+      const token = localStorage.getItem("token")
+      if (!token) {
+        navigate("/")
+        return
+      }
+
       const params = new URLSearchParams()
       if (queryParams.from || filters.from) params.append("from", queryParams.from || filters.from)
       if (queryParams.to || filters.to) params.append("to", queryParams.to || filters.to)
@@ -29,7 +50,11 @@ function ViewFlights() {
 
       const response = await axios.get(
         `${API_URL}/api/flights${params.toString() ? "?" + params.toString() : ""}`,
-        { withCredentials: true }
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        }
       )
 
       setFlights(response.data.flights || [])
@@ -77,6 +102,7 @@ function ViewFlights() {
     <div className="page">
       <div className="header">
         <div className="logo">Uplift</div>
+        <button className="header-logout" onClick={handleLogout}>Logout</button>
       </div>
 
       <div className="flights-container">

@@ -1,11 +1,29 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import axios from "axios"
 import "../cart.css"
+
+const API_URL = process.env.REACT_APP_API_URL
 
 function Cart() {
 
   const [cartItems, setCartItems] = useState([])
   const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      if (token) {
+        await axios.post(`${API_URL}/api/logout`, {}, {
+          headers: { "Authorization": `Bearer ${token}` }
+        })
+      }
+    } catch (err) {
+      console.error("Logout error:", err)
+    }
+    localStorage.removeItem("token")
+    navigate("/")
+  }
 
   useEffect(() => {
     const storedCart = JSON.parse(localStorage.getItem("cart")) || []
@@ -36,6 +54,10 @@ function Cart() {
   if (cartItems.length === 0) {
     return (
       <div className="cart-page">
+        <div className="header">
+          <div className="logo">Uplift</div>
+          <button className="header-logout" onClick={handleLogout}>Logout</button>
+        </div>
         <h2>Your cart is empty</h2>
         <button onClick={() => navigate("/flights")}>
           Browse Flights
@@ -46,6 +68,10 @@ function Cart() {
 
   return (
     <div className="cart-page">
+      <div className="header">
+        <div className="logo">Uplift</div>
+        <button className="header-logout" onClick={handleLogout}>Logout</button>
+      </div>
 
       <h1>Flight Summary</h1>
 
@@ -72,9 +98,14 @@ function Cart() {
         <h3>Total: ${getTotal() + 49}</h3>
       </div>
 
-      <button onClick={() => navigate("/flights")}>
-        Change Flight
-      </button>
+      <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginTop: "20px" }}>
+        <button onClick={() => navigate("/home")}>
+          Back to Home
+        </button>
+        <button onClick={() => navigate("/flights")}>
+          Change Flight
+        </button>
+      </div>
 
     </div>
   )

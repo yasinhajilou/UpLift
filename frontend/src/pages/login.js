@@ -26,6 +26,12 @@ function Login() {
     )
 
     console.log("Login success:", response.data)
+    
+    // Store JWT token
+    if (response.data.token) {
+      localStorage.setItem("token", response.data.token)
+    }
+    
     navigate("/home")
 
   } catch (error) {

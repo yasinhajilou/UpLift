@@ -13,7 +13,19 @@ function Home() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/home`, { withCredentials: true })
+    const token = localStorage.getItem("token")
+    
+    if (!token) {
+      setError("No authentication token found. Please login again.")
+      setLoading(false)
+      return
+    }
+
+    axios.get(`${API_URL}/api/home`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    })
       .then(res => {
         console.log("Home response:", res.data)
         if (res.data.user) {
@@ -32,10 +44,12 @@ function Home() {
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${API_URL}/api/logout`, {}, { withCredentials: true })
+      await axios.post(`${API_URL}/api/logout`, {})
     } catch (err) {
       console.error("Logout error:", err)
     }
+    // Clear token and redirect
+    localStorage.removeItem("token")
     navigate("/")
   }
 
